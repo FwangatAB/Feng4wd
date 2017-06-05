@@ -1,4 +1,9 @@
 
+//reference for ros library
+#include <ros.h>
+#include <std_msgs/Int32.h>
+
+//referece for Nrf24l01 radio library
 #include <SPI.h>
 #include "RF24.h"
 
@@ -8,16 +13,30 @@ bool radioNumber = 0;
 
 /* Hardware configuration: Set up nRF24L01 radio on SPI bus plus pins 2 & 3 */
 RF24 radio(2,3);
-/**********************************************************/
 
 byte addresses[][6] = {"1Node","2Node"};
-int adjHeading = 0;
-int val = 5; 
-char c = 's';
+
+/**********************************************************/
+int adjHeading = 0;     //initalize compass heading degree adjustment as "0" 
+
+char c = 's';   //initialize robot motors as "stop" 
+int val = 5;    
+
+void commandCallback(const std_msgs::Int32& cmd_msg){
+  val = cmd_msg.data;
+}
+
+ros::NodeHandle  nh;
+
+std_msgs::Int32 adjDegree;
+ros::Publisher HeadingDegree("HeadingDegree", &adjDegree);
+ros::Subscriber<std_msgs::Int32>Motor_Cmd("cmd_4wd", commandCallback);
 
 void setup() {
-  Serial.begin(115200);
-  Serial.println(F("Radio transmition getting started"));
+  Serial.begin(57600);
+//  Serial.println(F("Radio transmition getting started"));
+
+  /***************Setup radio read/write pipes***************/
     
   radio.begin();
 
@@ -36,10 +55,21 @@ void setup() {
   
   // Start the radio listening for data
   radio.startListening();
+  
+  /*******************config ROS node*************/
+  
+  nh.initNode();
+  nh.advertise(HeadingDegree);
+  nh.subscribe(Motor_Cmd);
+  
+  
 }
 
 void loop() {
-  
+
+  /*******send commands to robot motors from local serial monitor********
+   
+   
    if ( Serial.available() )
       {
         char c = Serial.read();
@@ -72,14 +102,20 @@ void loop() {
                                                                       // Variable for the received timestamp
         while (radio.available()) {                                   // While there is data ready
           radio.read( &adjHeading, sizeof(int) );                   // Get the payload
-          Serial.println(adjHeading);
+       //   Serial.println(adjHeading);
         }
+       radio.stopListening();                          // First, stop listening so we can talk   
        
-        radio.stopListening();                          // First, stop listening so we can talk   
+       adjDegree.data = adjHeading; 
+       HeadingDegree.publish( &adjDegree);
+       nh.spinOnce();
+       delay(50); 
+    
+    /******************send commands to remote robot radio1****************/
         radio.write( &val, sizeof(int) );              // Send the final one back.      
         radio.startListening();                                       // Now, resume listening so we catch the next packets.     
-        Serial.print(F("Sent Motor Move Command "));
-        Serial.println(val);  
+    //    Serial.print(F("Sent Motor Move Command "));
+     //   Serial.println(val);  
      }
 } // Loop
 
