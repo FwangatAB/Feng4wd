@@ -1,18 +1,12 @@
 
-/*
-* Getting Started example sketch for nRF24L01+ radios
-* This is a very basic example of how to send data from one node to another
-* Updated: Dec 2014 by TMRh20
-*/
-
 #include <SPI.h>
 #include "RF24.h"
 
-/****************** User Config ***************************/
-/***      Set this radio as radio number 0 or 1         ***/
+/****************** Radio Config ***************************/
+/***      Set this local radio (-->raspberry pi) as 0, remote robot radio as 1 ***/
 bool radioNumber = 0;
 
-/* Hardware configuration: Set up nRF24L01 radio on SPI bus plus pins 7 & 8 */
+/* Hardware configuration: Set up nRF24L01 radio on SPI bus plus pins 2 & 3 */
 RF24 radio(2,3);
 /**********************************************************/
 
@@ -29,7 +23,7 @@ void setup() {
 
   // Set the PA Level low to prevent power supply related issues since this is a
  // getting_started sketch, and the likelihood of close proximity of the devices. RF24_PA_MAX is default.
-  radio.setPALevel(RF24_PA_LOW);
+  radio.setPALevel(RF24_PA_MAX);
   
   // Open a writing and reading pipe on each radio, with opposite addresses
   if(radioNumber){
@@ -53,22 +47,20 @@ void loop() {
           Serial.println(F("*** robot moving forward********"));
           val = 3;
 
-       }else
-        if ( c == 'x'){
+       }else if ( c == 'x'){
           Serial.println(F("*** robot moving backward*********"));
           val = 1;
 
-        }else
-          if ( c == 'a'){
+        }else if ( c == 'a'){
             Serial.println(F("*** robot moving left**********"));
             val = 4;
 
-          }else
-            if ( c == 'd'){
+          }else if ( c == 'd'){
             Serial.println(F("*** robot moving right************"));
              val = 2;
 
-         }else {
+         }else if ( c =='s'){
+          Serial.println(F("*** robot moving right************"));
              val = 5;
           }
       }
@@ -89,57 +81,6 @@ void loop() {
         Serial.print(F("Sent Motor Move Command "));
         Serial.println(val);  
      }
-   
-
-/****************** Ping Out Role ***************************/  
-
-    
- /*   radio.stopListening();                                    // First, stop listening so we can talk.
-    
-    
-    Serial.println(F("Now sending"));
-
-    unsigned long start_time = micros();                             // Take the time, and send it.  This will block until complete
-     if (!radio.write( &start_time, sizeof(unsigned long) )){
-       Serial.println(F("failed"));
-     }
-        
-    radio.startListening();                                    // Now, continue listening
-    
-    unsigned long started_waiting_at = micros();               // Set up a timeout period, get the current microseconds
-    boolean timeout = false;                                   // Set up a variable to indicate if a response was received or not
-    
-    while ( ! radio.available() ){                             // While nothing is received
-      if (micros() - started_waiting_at > 200000 ){            // If waited longer than 200ms, indicate timeout and exit while loop
-          timeout = true;
-          break;
-      }      
-    }
-        
-    if ( timeout ){                                             // Describe the results
-        Serial.println(F("Failed, response timed out."));
-    }else{
-        unsigned long got_time;                                 // Grab the response, compare, and send to debugging spew
-        radio.read( &got_time, sizeof(unsigned long) );
-        unsigned long end_time = micros();
-        
-        // Spew it
-        Serial.print(F("Sent "));
-        Serial.print(start_time);
-        Serial.print(F(", Got response "));
-        Serial.print(got_time);
-        Serial.print(F(", Round-trip delay "));
-        Serial.print(end_time-start_time);
-        Serial.println(F(" microseconds"));
-    }
-
-    // Try again later
-    delay(1000);
-  
-
-
-*/
-
 } // Loop
 
 
