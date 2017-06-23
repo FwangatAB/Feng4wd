@@ -8,11 +8,12 @@ from math import atan2, degrees, pi
 import random
 import math 
 
+ 
 #Tests module
 def printo():
-    print "Overlord Module 1.5"
-    print "C. Thomas Brittain"
-    print "12/26/13"
+    print "Feng_4wd Bot module 1.0"
+    print "Feng Wang"
+    print "06/18/2017"
 
 #///////////////// Main Control Variables /////////////////////////////
 def dVariables():
@@ -30,7 +31,7 @@ def dVariables():
 
     #How many frames to wait before moving.
     global waitedFrames
-    waitedFrames = 160
+    waitedFrames = 100
 
     #Proximity to target threshold.
     global targetProximity
@@ -90,11 +91,11 @@ def dVariables():
     global tranx
     tranx_ready = False
     #Carries what we have to say.
-    tranx = ""
+    tranx = 5
 
     #For getting information from the Arduino (tx was taken by Target X :P)
-    global rx
-    rx = " "
+    #global rx
+    #rx = " "
 
     #///////////////// End Serial Control Variables /////////////////////////
 
@@ -104,10 +105,10 @@ def dVariables():
 
     #I've not used this yet, but I plan on scaling motor-firing duration based
     global right, left, forward, stop
-    right = "2"
-    left = "4"
-    forward = "3"
-    stop = "5"
+    right = 4
+    left = 2
+    forward = 3
+    stop = 5
 
     #how far away from the target
     global motorDuration
@@ -159,7 +160,8 @@ def compass(headingDegrees):
     global compassInitFlag
     global initialRawHeading
     global intRx
-
+    
+    
     #This sets the first compass reading to our 0*.
     if compassInitFlag == False:
        initialRawHeading = headingDegrees
@@ -168,15 +170,18 @@ def compass(headingDegrees):
        exit 
 
     #This is the function that actually maps offsets the compass reading.
-    global intialRawHeading
+    
     if headingDegrees >= initialRawHeading:
         adjHeading = mapper(headingDegrees, initialRawHeading, 360, 0, (360-initialRawHeading))
     elif headingDegrees <= initialRawHeading:
         adjHeading = mapper(headingDegrees, 0, (initialRawHeading-1),(360-initialRawHeading), 360)
     
     #Here, our compass reading is loaded into intRx
+    
     intRx = adjHeading
-
+    
+    print "adjHeading from compass function %s" % adjHeading
+    
 def otracker():
     #Create video capture
     cap = cv2.VideoCapture(0)
@@ -184,8 +189,7 @@ def otracker():
     best_cnt = 1
 
     #Globalizing variables
-    global rx
-    global tranx
+    global tranx 
     global intRx
     global cxAvg  #<----I can't remember why...
     global iFrame 
@@ -203,7 +207,7 @@ def otracker():
     global cscX
     global cscY
     cscX, cscY = 0, 0
-
+    tranx = 5 
     #Variable to find target angle. (Used in turning the bot toward target.)
     shortestAngle = 0
 
@@ -212,9 +216,7 @@ def otracker():
     
     #Dot counter. He's a hungry hippo...
     dots = 0
-    
-    #Clearing the serial send string.
-    printRx = " "
+      
           
     while(1):
         #Read the frames
@@ -255,22 +257,16 @@ def otracker():
         
         #"printRx" is separate in case I want to parse out other sensor data
         #from the bot
-        printRx = str(intRx)
+        intHeadingDeg = intRx
+        headingDeg = str(intRx)
         
-        #Bot heading, unmodified
-        headingDeg = printRx
-        
-        #Making it a number so we can play with it.
-        intHeadingDeg = int(headingDeg)
-        headingDeg = str(intHeadingDeg)
-            
         #Strings to hold the "Target Lock" status.     
         stringXOk = " "
         stringYOk = " "
         
         #Incrementing frame index
         iFrame = iFrame + 1
-            
+        print "iFrame is %s" % iFrame
         #Convert to hsv and find range of colors
         thresh = mask
         thresh2 = thresh.copy()
@@ -319,7 +315,8 @@ def otracker():
         
         #Put the target angle into a string to printed.
         strTargetDegs = str(math.floor(degs))
-               
+        print "TargetDegs from otracker function %s" % targetDegs
+        
         #///End Finding Target Angle////////////////////////////////////
 
         
@@ -330,25 +327,31 @@ def otracker():
             #This compares the bot's heading with the target angle.  It must
             #be +-30 for the bot to move forward, otherwise it will turn.
             shortestAngle = targetDegs - intHeadingDeg
+            #print "shortestAngle=targetDegs-intHeadingDeg %s" % shortestAngle
             
             if shortestAngle > 180:
                 shortestAngle -= 360
             if shortestAngle < -180:
                 shortestAngle += 360
+            print "shortestAngle=targetDegs-intHeadingDeg %s" % shortestAngle   
             #Do we move left, right, or forward.
-            if shortestAngle <= 30 and shortestAngle >= -31:
-                tranx = (forward)
+            if shortestAngle <= 30 and shortestAngle >= -30:
+                #tranx = (forward)
+                tranx = 3
                 tranx_ready = True
-            elif shortestAngle >= 1:
-                tranx = (right)
+            elif shortestAngle > 30:
+                #tranx = (left)
+                tranx = 2
                 tranx_ready = True
-            elif shortestAngle < 1:
-                tranx = (left)
+            elif shortestAngle < -30:
+                #tranx = (left)
+                tranx = 4
                 tranx_ready = True
-                
-        
+                 
+            
         #//// End Move Bot //////////////////////////////////
-  
+        
+        print ('motor command is %s' % tranx)
         
         #////////CV Dawing//////////////////////////////
         
@@ -395,6 +398,5 @@ def otracker():
             cap.release()
             cv2.destroyAllWindows()
             #Tell the robot to stop before quit.
-            ser.write("5") 
-            ser.close() # Closes the serial connection.
+            tranx = 5
             break
