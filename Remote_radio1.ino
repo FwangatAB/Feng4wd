@@ -272,10 +272,10 @@ delay(keyDuration);
 
 void Left(){
       //Left
-      analogWrite(pwm_a, highspeed);
+      analogWrite(pwm_a, 0);
       analogWrite(pwm_b, highspeed);
 
-      digitalWrite(dir_a, LOW);  //Reverse motor direction, 1 high, 2 low
+      digitalWrite(dir_a, HIGH);  //Reverse motor direction, 1 high, 2 low
       digitalWrite(dir_b, HIGH);  //Reverse motor direction, 3 low, 4 high
 
 delay(keyDuration);
@@ -284,10 +284,10 @@ delay(keyDuration);
 void Right(){
       //Right
       analogWrite(pwm_a, highspeed);
-      analogWrite(pwm_b, highspeed);
+      analogWrite(pwm_b, 0);
 
       digitalWrite(dir_a, HIGH);  //Reverse motor direction, 1 high, 2 low
-      digitalWrite(dir_b, LOW);  //Reverse motor direction, 3 low, 4 high
+      digitalWrite(dir_b, HIGH);  //Reverse motor direction, 3 low, 4 high
 
 delay(keyDuration);
 }
