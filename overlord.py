@@ -1,6 +1,3 @@
-#Overlord Module 1.5
-#C. Thomas Brittain
-#12/26/13
 
 import cv2
 import numpy as np
@@ -202,7 +199,7 @@ def otracker():
 
     global selection, drag_start, tracking_state, show_backproj
     global selcFrame
-
+        
     #These are the centroid of the camShift.
     global cscX
     global cscY
@@ -210,10 +207,11 @@ def otracker():
     tranx = 5 
     #Variable to find target angle. (Used in turning the bot toward target.)
     shortestAngle = 0
-
+    global startFlag 
+    
     #Flag for getting a new target.
     newTarget = True
-    
+    startFlag = True
     #Dot counter. He's a hungry hippo...
     dots = 0
       
@@ -273,8 +271,23 @@ def otracker():
 
         #Randomizing target.
         if newTarget == True:
-            tX = random.randrange(targetLeftLimit, targetRightLimit, 1)
-            tY = random.randrange(targetTopLimit, targetBottomLimit, 1)
+            if startFlag == True:
+                tX = 1
+                tY = 1
+                startFlag = False
+                
+            elif tY <= 480:
+                if tX == 1:
+                    tX = 640
+                    tY = + 20
+                else: 
+                    tX = 1
+                    tY = + 20 
+            else:
+                tX = 1
+                tY = 1
+                startFlag = True
+                
             newTarget = False
 
         #Did our robot eat the dot?
