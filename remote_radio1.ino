@@ -1,5 +1,16 @@
+/*
+ * remote_radio0
+ * the sketch for arduino uno on multibot end. 
+ * 
+ * JULY 25 2017 SETUP COMPASS OFFSET VALUES (run hmc8553l_calibration.ino get offsetX and offsetY, replacce compass offset (x,y) in this sketch. 
+ * COMMENT OUT MAP() FUNCTION. 
+ * 
+ * JULY 28 2017 MODIFIED SKETCH TO OBTAAIN VOLT AND CURRENT VALUE FROM THE Li BATTERY
+ * 
+ */
+
 #include "Arduino.h"
-//JULY 25 2017 SETUP COMPASS OFFSET VALUES. COMMENT OUT MAP() FUNCTION.
+
 // Reference the I2C Library
 #include <Wire.h>
 
@@ -38,6 +49,8 @@ int pwm_a = 6;  //PWM control for motor1
 int pwm_b = 7;  //PWM control for motor2
 int dir_a = 8;  //dir control for motor1
 int dir_b = 9;  //dir control for motor2
+
+
 
 int lowspeed = 140;
 int highspeed = 255;
