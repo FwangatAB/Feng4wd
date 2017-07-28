@@ -2,10 +2,14 @@
  * remote_radio0
  * the sketch for arduino uno on multibot end. 
  * 
- * JULY 25 2017 SETUP COMPASS OFFSET VALUES (run hmc8553l_calibration.ino get offsetX and offsetY, replacce compass offset (x,y) in this sketch. 
+ * JULY 25 2017 SETUP COMPASS OFFSET VALUES (run hmc8553l_calibration.ino get offsetX (229) and offsetY (-427), replacce compass offset (x,y) in this sketch. 
  * COMMENT OUT MAP() FUNCTION. 
  * 
- * JULY 28 2017 MODIFIED SKETCH TO OBTAAIN VOLT AND CURRENT VALUE FROM THE Li BATTERY
+ * JULY 28 2017 MODIFIED SKETCH TO OBTAAIN VOLT (A0) AND CURRENT (A1)VALUE FROM THE Li BATTERY (Max471 sensor)
+ * DataStructure to sent adjHeading, voltage, current in one package. 
+ * 
+ * TO DO LIST
+ * RADIO WITH SLEEP FUNCTION TO BE ENERGY EFFICIENT
  * 
  */
 
@@ -21,8 +25,13 @@
 #include <SPI.h>
 #include "RF24.h"
 
-// Store our compass as a variable.
-HMC5883L compass;
+//define A0, A1 for Max471 sensor
+#define VT_PIN A0                           //A0 connect with VT
+#define AT_PIN A1                           //A1 connect with AT
+
+#define ARDUINO_WORK_VOLTAGE 5.0   //work voltage for v/amp chip. if 5.0v, volt measure range from 3-25V, if 3.3, from 
+
+HMC5883L compass;                           // Store our compass as a variable.
 
 /****************** Radio Config ***************************/
 /* Nrf24L01 radio module with base module 5V
@@ -50,8 +59,6 @@ int pwm_b = 7;  //PWM control for motor2
 int dir_a = 8;  //dir control for motor1
 int dir_b = 9;  //dir control for motor2
 
-
-
 int lowspeed = 140;
 int highspeed = 255;
 
@@ -65,6 +72,13 @@ int iComp;
 
 int val = 5;
 char d = 's';
+
+struct dataStruct{
+  int adjHeading;
+  double voltage;
+  double current;
+}myData;
+
 
 void setup(){
 
@@ -126,8 +140,16 @@ void setup(){
 }
 
 // The loop function is called in an endless loop
+
+
 void loop()
 {
+  
+  int vt_temp = analogRead(VT_PIN);
+  int at_temp = analogRead(AT_PIN);
+
+  myData.voltage = vt_temp * (ARDUINO_WORK_VOLTAGE / 1023.0) * 5;         // obtain voltage value
+  myData.current = at_temp * (ARDUINO_WORK_VOLTAGE / 1023.0);             // obtain current value
   
   /**********************calculate adjHeading*******************/
 
@@ -157,9 +179,10 @@ void loop()
 
     // Convert to degrees
     float headingDegrees = heading * 180/M_PI;
-    int adjHeading = 0;
+   
     //The "floor" part makes the float into an integer, rounds it up.
-    adjHeading = floor(headingDegrees);
+    myData.adjHeading = floor(headingDegrees);
+    
    /* headingDegrees = floor(headingDegrees);
     if (headingDegrees >= 280){
         adjHeading = map(headingDegrees, 280, 360, 0, 79);
@@ -169,13 +192,14 @@ void loop()
     }
     delay(20);
        
-    /****************** Send adjHeading value to radio 0 ***************************/
+    /****************** Send data structure to radio 0 ***************************/
 
         radio.stopListening();                                    // First, stop listening so we can talk.
 
 
-         if (!radio.write(&adjHeading, sizeof(int) )){
-                   }
+         if (!radio.write(&myData, sizeof(myData) )){
+            Serial.println(F("failed to sent"));
+            }
 
         radio.startListening();                                    // Now, continue listening
 
