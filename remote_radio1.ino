@@ -1,5 +1,5 @@
 #include "Arduino.h"
-
+//JULY 25 2017 SETUP COMPASS OFFSET VALUES. COMMENT OUT MAP() FUNCTION.
 // Reference the I2C Library
 #include <Wire.h>
 
@@ -40,7 +40,7 @@ int dir_a = 8;  //dir control for motor1
 int dir_b = 9;  //dir control for motor2
 
 int lowspeed = 140;
-int highspeed = 140;
+int highspeed = 255;
 
 //Distance away
 int distance;
@@ -57,7 +57,7 @@ void setup(){
 
  /*****************************Setup for Nrf24L01 radio module********************/
 
-  Serial.begin(115200);    //Nrf24L radio on 115200, and HMC5886L on 9600?
+  Serial.begin(9600);    //Nrf24L radio on 115200, and HMC5886L on 9600?
   Serial.println(F("Radio Start"));
   radio.begin();
 
@@ -78,13 +78,8 @@ void setup(){
 
 /*********************************Setup for HMC5886L compass module***************************/
 
-    Serial.begin(115200);
-
-   //  Wire.begin(); // Start the I2C interface.need it or not?
-
       Serial.println("Initialize HMC5883L");
-    //  compass = HMC5883L(); // Construct a new HMC5883 compass.
-
+          
       while (!compass.begin())
        {
          Serial.println("Could not find a valid HMC5883L sensor, check wiring!");
@@ -104,7 +99,7 @@ void setup(){
        compass.setSamples(HMC5883L_SAMPLES_8);
 
        // Set calibration offset. See HMC5883L_calibration.ino
-       compass.setOffset(0, 0);
+       compass.setOffset(229, -427);
 
 
       pinMode(pwm_a, OUTPUT);  //Set control pins to be outputs
@@ -115,14 +110,12 @@ void setup(){
       analogWrite(pwm_a, 0);
       analogWrite(pwm_b, 0);
 
-
 }
 
 // The loop function is called in an endless loop
 void loop()
 {
-
-
+  
   /**********************calculate adjHeading*******************/
 
   Vector norm = compass.readNormalize();
@@ -135,7 +128,7 @@ void loop()
     // (+) Positive or (-) for negative
     // For Bytom / Poland declination angle is 4'26E (positive)
     // Formula: (deg + (min / 60.0)) / (180 / M_PI);
-    float declinationAngle = (14.0 + (27.0 / 60.0)) / (180 / M_PI);
+    float declinationAngle = (14.0 + (25.0 / 60.0)) / (180 / M_PI);
     heading += declinationAngle;
 
     // Correct for heading < 0deg and heading > 360deg
@@ -151,26 +144,17 @@ void loop()
 
     // Convert to degrees
     float headingDegrees = heading * 180/M_PI;
-
-  // Normally we would delay the application by 66ms to allow the loop
-  // to run at 15Hz (default bandwidth for the HMC5883L).
-  // However since we have a long serial out (104ms at 9600) we will let
-  // it run at its natural speed.
-  // delay(66);
-
-  //This throttles how much data is sent to Python code.
-  //Basically, it updates every second (10 microsecond delay X 100 iComps)
-  
     int adjHeading = 0;
     //The "floor" part makes the float into an integer, rounds it up.
-    headingDegrees = floor(headingDegrees);
+    adjHeading = floor(headingDegrees);
+   /* headingDegrees = floor(headingDegrees);
     if (headingDegrees >= 280){
         adjHeading = map(headingDegrees, 280, 360, 0, 79);
     }
     else if (headingDegrees <= 279) {
         adjHeading = map(headingDegrees, 0, 279, 80, 360);
     }
-
+    delay(20);
        
     /****************** Send adjHeading value to radio 0 ***************************/
 
@@ -201,40 +185,6 @@ void loop()
         Serial.println(val);
      }
   // }
-
-
-   /****************** receive morot move command from remote arduino serial monitor ***************************/
-
- /*   if ( Serial.available() )
-    {
-      char c = toupper(Serial.read());
-      if ( c == 'w'){
-        Serial.println(F("*** robot moving forward"));
-        val = 3;
-
-     }else
-      if ( c == 'x'){
-        Serial.println(F("*** robot moving backward"));
-        val = 1;
-
-      }else
-        if ( c == 'a'){
-          Serial.println(F("*** robot moving left"));
-          val = 4;
-
-        }else
-          if ( c == 'd'){
-          Serial.println(F("*** robot moving right"));
-           val = 2;
-
-       }else
-           if ( c == 's'){
-           Serial.println(F("*** robot stop moving"));
-            val = 5;
-
-        }
-    } 
-   /*************************************************/
 
   if (val == 1)
   {
@@ -277,22 +227,22 @@ delay(keyDuration);
 
 void Left(){
       //Left
-      analogWrite(pwm_a, lowspeed);
-      analogWrite(pwm_b, lowspeed);
+      analogWrite(pwm_a, highspeed);
+      analogWrite(pwm_b, highspeed);
 
-      digitalWrite(dir_a, LOW);  //Reverse motor direction, 1 high, 2 low
-      digitalWrite(dir_b, HIGH);  //Reverse motor direction, 3 low, 4 high
+      digitalWrite(dir_a, HIGH);  //Reverse motor direction, 1 high, 2 low
+      digitalWrite(dir_b, LOW);  //Reverse motor direction, 3 low, 4 high
 
 delay(keyDuration);
 }
 
 void Right(){
       //Right
-      analogWrite(pwm_a, lowspeed);
-      analogWrite(pwm_b, lowspeed);
+      analogWrite(pwm_a, highspeed);
+      analogWrite(pwm_b, highspeed);
 
-      digitalWrite(dir_a, HIGH);  //Reverse motor direction, 1 high, 2 low
-      digitalWrite(dir_b, LOW);  //Reverse motor direction, 3 low, 4 high
+      digitalWrite(dir_a, LOW);  //Reverse motor direction, 1 high, 2 low
+      digitalWrite(dir_b, HIGH);  //Reverse motor direction, 3 low, 4 high
 
 delay(keyDuration);
 }
@@ -320,5 +270,3 @@ void Stop(){
 
   delay(keyDuration);
 }
-
-
