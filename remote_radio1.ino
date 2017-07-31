@@ -150,6 +150,11 @@ void loop()
 
   myData.voltage = vt_temp * (ARDUINO_WORK_VOLTAGE / 1023.0) * 5;         // obtain voltage value
   myData.current = at_temp * (ARDUINO_WORK_VOLTAGE / 1023.0);             // obtain current value
+
+  Serial.print("voltage is ");
+  Serial.println(myData.voltage);
+  Serial.print("current is ");
+  Serial.println(myData.current);
   
   /**********************calculate adjHeading*******************/
 
@@ -182,7 +187,8 @@ void loop()
    
     //The "floor" part makes the float into an integer, rounds it up.
     myData.adjHeading = floor(headingDegrees);
-    
+    Serial.print("The adjHeading is ");
+    Serial.println(myData.adjHeading);
    /* headingDegrees = floor(headingDegrees);
     if (headingDegrees >= 280){
         adjHeading = map(headingDegrees, 280, 360, 0, 79);
