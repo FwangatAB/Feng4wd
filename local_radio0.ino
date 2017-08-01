@@ -11,7 +11,8 @@
 
 //reference for ros library
 #include <ros.h>
-#include <std_msgs/Int32.h>
+#include <std_msgs/Int16.h>
+#include <std_msgs/Float32.h>
 
 //referece for Nrf24l01 radio library
 #include <SPI.h>
@@ -30,30 +31,30 @@ byte addresses[][6] = {"1Node","2Node"};
 
 struct dataStruct{
   int adjHeading;
-  double voltage;
-  double current;
+  float voltage;
+  float current;
 }myData;
 
 char c = 's';   //initialize robot motors as "stop" 
 int val = 5;    
 
-void commandCallback(const std_msgs::Int32& cmd_msg){
+void commandCallback(const std_msgs::Int16& cmd_msg){
   val = cmd_msg.data;
 }
 
 ros::NodeHandle  nh;
 
-std_msgs::Int32 adjDegree;
-std_msgs::Int32 voltage;
-std_msgs::Int32 current;
+std_msgs::Int16 adjDegree;
+std_msgs::Float32 voltage;
+std_msgs::Float32 current;
 ros::Publisher HeadingDegree("HeadingDegree", &adjDegree);
 ros::Publisher VoltageInfo("VoltageInfo", &voltage);
 ros::Publisher CurrentInfo("CurrentInfo", &current);
-ros::Subscriber<std_msgs::Int32>Motor_Cmd("cmd_4wd", commandCallback);
+ros::Subscriber<std_msgs::Int16>Motor_Cmd("cmd_4wd",commandCallback);
 
 void setup() {
   Serial.begin(57600);
-//  Serial.println(F("Radio transmition getting started"));
+//  Serial.println(F("Radio transmition getting started")); 
 
   /***************Setup radio read/write pipes***************/
     
@@ -79,6 +80,8 @@ void setup() {
   
   nh.initNode();
   nh.advertise(HeadingDegree);
+  nh.advertise(VoltageInfo);
+  nh.advertise(CurrentInfo);
   nh.subscribe(Motor_Cmd);
   
   
