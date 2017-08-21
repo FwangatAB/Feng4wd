@@ -52,7 +52,8 @@ def settings():
     #global values from compass(), need to define as global here, or only once in the ros_module?
     global headingDegrees    
     headingDegrees = 0
-        
+    derivateDegree = 30
+       
     global compassInitFlag
     compassInitFlag = False
     
@@ -60,7 +61,7 @@ def settings():
 
     global initCompass
     initCompass = 0    
-
+	
     #///////////////// Motor Control Variables /////////////////////////////
 
     right = 4
@@ -74,11 +75,11 @@ def draw_str():
 	 
 	#Background for text.
     cv2.rectangle(vis, (guiX+18,guiY+2), (guiX+170,guiY+160), (255,255,255), -1)
-    cv2.putText(vis,"MultiBot:"+str(cscX)+" , "+str(cscY),(guiX+20,guiY+20),cv2.FONT_HERSHEY_COMPLEX_SMALL,.7,(0,0,0))
-    cv2.putText(vis,"Target:"+str(tX)+" , "+str(tY),(guiX+20,guiY+40),cv2.FONT_HERSHEY_COMPLEX_SMALL,.7,(0,0,0))
-    cv2.putText(vis,"Compass initReading: "+str(initCompass)+" Deg",(guiX+20,guiY+60),cv2.FONT_HERSHEY_COMPLEX_SMALL,.7,(0,0,0))
-    cv2.putText(vis,"Target deg: "+strTargetDegs+" Deg",(guiX+20,guiY+100),cv2.FONT_HERSHEY_COMPLEX_SMALL,.7,(0,0,0))
-    cv2.putText(vis,"Bot turningdeg: "+str(shortestAngle)+" Deg",(guiX+20,guiY+80),cv2.FONT_HERSHEY_COMPLEX_SMALL,.7,(0,0,0))
+    cv2.putText(vis,"MultiBot:"+str(botPosition.X)+" , "+str(botPosition.Y),(guiX+20,guiY+20),cv2.FONT_HERSHEY_COMPLEX_SMALL,.7,(0,0,0))
+    cv2.putText(vis,"Target:"+str(targetPoint.X)+" , "+str(targetPoint.Y),(guiX+20,guiY+40),cv2.FONT_HERSHEY_COMPLEX_SMALL,.7,(0,0,0))
+    cv2.putText(vis,"Compass initReading: "+str(calibrDegree)+" Deg",(guiX+20,guiY+60),cv2.FONT_HERSHEY_COMPLEX_SMALL,.7,(0,0,0))
+    cv2.putText(vis,"Target deg: "+str(adjustDegree)+" Deg",(guiX+20,guiY+100),cv2.FONT_HERSHEY_COMPLEX_SMALL,.7,(0,0,0))
+    cv2.putText(vis,"Bot turningdeg: "+str(delatDegree)+" Deg",(guiX+20,guiY+80),cv2.FONT_HERSHEY_COMPLEX_SMALL,.7,(0,0,0))
     cv2.putText(vis,"Voltage: "+str(voltage_value)+" volt",(guiX+20,guiY+120),cv2.FONT_HERSHEY_COMPLEX_SMALL,.7,(0,0,0))
     cv2.putText(vis,"Current: "+str(current_value)+" amp",(guiX+20,guiY+140),cv2.FONT_HERSHEY_COMPLEX_SMALL,.7,(0,0,0))
 
@@ -89,24 +90,23 @@ def Calibrate_base():
 	frameCount = frameCount +1
 	
 	#Calibration process
-	if clibFlag is False & tracking_state = 1:
+	if initPositionFlag is False:
+		initPosition = botPostion
+		initPositionFlag is true
+			
+	if iFrame < waitedFrame:
+		motorComm = 3
+		iFrame ++
 		
-		if initPositionFlag is False:
-			initPosition = botPostion
-			initPositionFlag is true
-			
-		if iFrame < waitedFrame:
-			motorComm = 3
-			iFrame ++
-			
-		if iFrame >= waitedFrame:
-			motorComm = 5
-			clibFlag is True
-			rads = atan2((botPosition.y - initPosition.y),(botPostion.x - initPosition.x))
-			Initdegs = degrees(rads)
-			#offset -180 -> 0 degrees to 180 -> 360 degrees			
-			if Initdegs < 0 & Initdegs >= -180:
-				Initdegs = 360 + Initdegs
+	if iFrame >= waitedFrame:
+		motorComm = 5
+		clibFlag is True
+		rads = atan2((botPosition.y - initPosition.y),(botPostion.x - initPosition.x))
+		Initdegs = degrees(rads)
+		#offset -180 -> 0 degrees to 180 -> 360 degrees			
+		if Initdegs < 0 & Initdegs >= -180:
+			Initdegs = 360 + Initdegs
+		CalibrDegree = ros_module.initCompass - Initdegs  # the compass degree when multibot is heading parale with x axis.
 '''
 
 degrees(atan2(y,x))  
@@ -122,17 +122,28 @@ degrees(atan2(y,x))
 			   
 '''
 
-def move_base():
-	if clibFlag is True & tracking_state = 1:
+def base_comm():
+	if sqrt((botposition.y ** - targetPoint.y **)+(botposition.x ** -targetPoint.y **)) > targetProximity:
 		rads = atan2((botPosition.y - targetPoint.y),(botPosition.x - targetPoint.y))
 		degs = degrees(rads)
 		if degs < 0 & degs >= -180:
 			degs +360 + degs
-		deltaDegs = degs - Initdegs
-		
+		adjustDegree = ros_module.compassDegree - calibrDegree
+		deltaDegs = degs - adjustDegree
+		if deltaDegs >= derivateDegree and deltaDegs < 180:
+			motorComm = 4
+		if deltaDegs <= (- derivateDegree) and deltagDegs > -180:
+			motorComm = 2
+		else motorComm = 3
+	else motorComm = 5
 
-	
-	
+def base_run():
+	if clibFlag is False & tracking_state = 1:
+		Calibrate_base
+	if clibFlag is True & tracking_state = 1:
+		while True:
+			base_comm
+			
 	
 class App(object):
     def __init__(self, video_src):
@@ -212,7 +223,9 @@ class App(object):
                 if self.show_backproj:
                     vis[:] = prob[...,np.newaxis]
                 try:
-                    cv2.ellipse(vis, track_box, (0, 0, 255), 2)
+                    cv2.circle(vis, botPosition, 10, (0, 0, 255), -1)
+                    cv2.circle(vis, targetPoint, 10, (0, 255,0), -1)
+                    cv2.line(vis, botPosition, targetPoint, (255, 0,0), 1)
                 except:
                     print(track_box)
             draw_str()
@@ -229,12 +242,18 @@ class App(object):
 if __name__ == '__main__':
     import sys
     try:
-        video_src = sys.argv[1]
+		video_src = 0
     except:
-        video_src = 0
+        video_src = sys.argv[1]
     print(__doc__)
-    #App(video_src).run()
-    OpenCV = threading.Thread(target=App(video.src).run())
+    
+    OpenCV = threading.thread(target = App(video_src).run)
     OpenCV.start()
-	
-    ros_module.RosNodes(motorComm)
+    
+    MotorMove = threading.thread(target = base_run)
+    MotorMove.start()
+    
+    ros_module.RosNodes
+    
+    
+  
